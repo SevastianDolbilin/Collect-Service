@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from collect_service.constants import TIME_NUMBER_ONE, TIME_NUMBER_TWO
 
 from .models import Collect, Payment
-from .permissions import Anonymous, Author
+from .permissions import Anonymous, Administrator, Author
 from .serializers import CollectSerializer, PaymentSerializer
 from .tasks import send_notify_email_task
 
@@ -27,7 +27,7 @@ class CollectViewSet(viewsets.ModelViewSet):
         if self.request.method in ["POST"]:
             permission_classes = [IsAuthenticated]
         elif self.request.method in ["PUT", "PATCH", "DELETE"]:
-            permission_classes = [Author]
+            permission_classes = [Author, Administrator]
         else:
             permission_classes = [Anonymous]
         return [permission() for permission in permission_classes]
