@@ -67,21 +67,20 @@
     docker-compose run --rm web python manage.py generate_mock_data
 
 
-## Сервис будет доступен по следующему адресу 
+### Сервис будет доступен по следующему адресу 
 
     http://localhost:8000/api/
 
-## Документация Swagger
+### Документация Swagger
 
     http://localhost:8000/swagger/
 
-## Redoc
+### Redoc
 
     http://localhost:8000/redoc/
 
-    
 
 
-### Автор
+ **Автор**
  Севастиан Долбилин
  Python backend developer
