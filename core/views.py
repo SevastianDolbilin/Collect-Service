@@ -1,13 +1,16 @@
 from django.core.cache import cache
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
 from collect_service.constants import TIME_NUMBER_ONE, TIME_NUMBER_TWO
 
 from .models import Collect, Payment
+from .permissions import Anonymous, Author
 from .serializers import CollectSerializer, PaymentSerializer
 from .tasks import send_notify_email_task
+
 
 COLLECTS_CACHE_KEY = "collects_list_cache"
 COLLECTS_CACHE_TTL = TIME_NUMBER_ONE * TIME_NUMBER_TWO
@@ -18,7 +21,16 @@ class CollectViewSet(viewsets.ModelViewSet):
 
     queryset = Collect.objects.all().select_related("author")
     serializer_class = CollectSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_permissions(self):
+        """Получение разрешения в зависимости от типа запроса."""
+        if self.request.method in ["POST"]:
+            permission_classes = [IsAuthenticated]
+        elif self.request.method in ["PUT", "PATCH", "DELETE"]:
+            permission_classes = [Author]
+        else:
+            permission_classes = [Anonymous]
+        return [permission() for permission in permission_classes]
 
     def clear_collects_cache(self):
         cache.delete(COLLECTS_CACHE_KEY)
@@ -72,7 +84,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
         cache.delete(COLLECTS_CACHE_KEY)
 
-        send_notify_email_task(
+        send_notify_email_task.delay()(
             subject="Спасибо за пожертвование!",
             message=(
                 f"Вы отправили {payment.amount}₽"
